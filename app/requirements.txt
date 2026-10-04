@@ -8,3 +8,4 @@ langchain-community
 langchain-aws
 faiss-cpu
 sentence-transformers
+langchain-text-splitters
