@@ -54,6 +54,23 @@ class TestSecurity(unittest.TestCase):
         )
 
     @patch(
+        "app.security.READER_API_KEY",
+        "reader-secret"
+    )
+    @patch(
+        "app.security.ADMIN_API_KEY",
+        "admin-secret"
+    )
+    def test_invalid_reader_key_is_rejected(self):
+        with self.assertRaises(HTTPException) as context:
+            require_reader("wrong-key")
+
+        self.assertEqual(
+            context.exception.status_code,
+            401
+        )
+
+    @patch(
         "app.security.ADMIN_API_KEY",
         "admin-secret"
     )
@@ -74,8 +91,3 @@ class TestSecurity(unittest.TestCase):
             context.exception.status_code,
             403
         )
-
-
-if name == "main":
-    unittest.main()
-    )
