@@ -76,5 +76,5 @@ class TestSecurity(unittest.TestCase):
         )
 
 
-if _name_ == "_main_":
+if name == "main":
     unittest.main()
