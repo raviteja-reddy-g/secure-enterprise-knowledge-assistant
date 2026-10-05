@@ -1,14 +1,14 @@
 import hmac
-import os
 
 from fastapi import Header, HTTPException, status
 
-
-READER_API_KEY = os.getenv("READER_API_KEY")
-ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")
+from app.config import ADMIN_API_KEY, READER_API_KEY
 
 
-def _keys_match(provided_key: str, expected_key: str | None) -> bool:
+def _keys_match(
+    provided_key: str,
+    expected_key: str | None
+) -> bool:
     """Compare API keys safely."""
 
     if not expected_key:
