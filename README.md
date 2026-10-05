@@ -12,19 +12,17 @@ This project demonstrates an end-to-end AI knowledge retrieval architecture usin
 
 ## Overview
 
-Enterprise organizations often store large amounts of operational knowledge across policies, procedures, technical documentation, support information, and internal knowledge repositories.
+Enterprise organizations often store operational knowledge across policies, procedures, technical documentation, support information, and internal knowledge repositories.
 
-Finding accurate information manually can be slow and inconsistent.
-
-This project demonstrates a RAG-based enterprise knowledge assistant that:
+This project demonstrates a RAG-based knowledge assistant that:
 
 1. Loads enterprise documents from Amazon S3.
 2. Cleans and splits document content into smaller chunks.
 3. Converts document chunks into semantic embeddings.
-4. Stores the embeddings in a FAISS vector index.
-5. Retrieves relevant document chunks for a user's question.
+4. Stores embeddings in a FAISS vector index.
+5. Retrieves relevant chunks for a user's question.
 6. Sends the retrieved context to an Amazon Bedrock language model.
-7. Generates a grounded answer through a FastAPI service.
+7. Returns a grounded answer through a FastAPI service.
 8. Protects query and administrative operations using role-separated API-key authorization.
 9. Uses Docker for containerization.
 10. Uses GitHub Actions for automated syntax checks and unit testing.
@@ -145,13 +143,13 @@ secure-enterprise-knowledge-assistant/
 
 ## Document Ingestion Pipeline
 
-An administrator can trigger knowledge-base ingestion through:
+An administrator can trigger ingestion through:
 
 http
 POST /admin/ingest
 
 
-The ingestion workflow performs the following steps:
+The ingestion workflow is:
 
 text
 Amazon S3 Documents
@@ -169,7 +167,7 @@ FAISS Vector Index
 Local Vector Store
 
 
-The current implementation supports text-based files including:
+The current implementation supports:
 
 text
 .txt
@@ -177,52 +175,36 @@ text
 .json
 
 
-The ingestion process returns the number of documents processed and the number of chunks created.
-
----
-
-## Document Processing
-
-Documents are cleaned before indexing.
-
-Extra whitespace and line breaks are normalized, after which the content is divided into smaller overlapping chunks using RecursiveCharacterTextSplitter.
-
-Default chunk configuration:
+Default document-processing configuration:
 
 text
 Chunk Size:     1000
 Chunk Overlap:  150
 
 
-Chunk overlap helps preserve contextual continuity between adjacent sections of a document.
+Chunk overlap helps preserve context across neighboring chunks.
 
 ---
 
 ## Embeddings and Vector Search
 
-The project uses the following sentence-transformer embedding model:
+The project uses:
 
 text
 sentence-transformers/all-MiniLM-L6-v2
 
 
-Document chunks are converted into vector embeddings and stored using FAISS.
+Document chunks are converted into embeddings and stored in FAISS. At query time, semantic similarity search retrieves the most relevant chunks.
 
-When a question is submitted, semantic similarity search retrieves the most relevant chunks from the vector index.
-
-The default retrieval configuration is:
+The default retrieval setting is:
 
 text
 TOP_K_RESULTS=5
 
 
-This value can be changed using environment configuration.
-
 ---
 
 ## Retrieval-Augmented Generation Flow
-
-When an authorized user asks a question:
 
 text
 User Question
@@ -240,9 +222,7 @@ Amazon Bedrock LLM
 Grounded Answer
 
 
-The model is instructed to answer using only the retrieved enterprise context.
-
-If the retrieved information does not support an answer, the prompt instructs the model not to invent information.
+The model is instructed to answer using the retrieved enterprise context and to avoid inventing unsupported information.
 
 The Bedrock model is configurable through:
 
@@ -250,13 +230,11 @@ text
 BEDROCK_MODEL_ID
 
 
-This allows the application to use an appropriate supported Amazon Bedrock model without hard-coding one specific model into the application.
-
 ---
 
 ## API Endpoints
 
-### Root Endpoint
+### Root
 
 http
 GET /
@@ -269,8 +247,6 @@ json
   "message": "Secure Enterprise Knowledge Assistant API is running"
 }
 
-
----
 
 ### Health Check
 
@@ -286,15 +262,13 @@ json
 }
 
 
----
-
 ### Ask a Question
 
 http
 POST /ask
 
 
-Requires:
+Required header:
 
 text
 X-API-Key: <reader-or-admin-key>
@@ -317,29 +291,19 @@ json
 }
 
 
----
-
 ### Rebuild the Knowledge Index
 
 http
 POST /admin/ingest
 
 
-Requires:
+Required header:
 
 text
 X-API-Key: <admin-key>
 
 
-This endpoint:
-
-1. Lists supported documents in Amazon S3.
-2. Loads document content.
-3. Cleans the text.
-4. Splits documents into chunks.
-5. Generates embeddings.
-6. Creates the FAISS vector index.
-7. Saves the vector store.
+The endpoint loads supported documents from S3, cleans and chunks the content, generates embeddings, creates the FAISS index, and saves the vector store.
 
 Example response structure:
 
@@ -373,7 +337,7 @@ POST /ask
 POST /admin/ingest
 
 
-Authentication is supplied through the HTTP header:
+Authentication is supplied through:
 
 text
 X-API-Key
@@ -385,33 +349,15 @@ python
 hmac.compare_digest()
 
 
-rather than a normal string comparison.
+Configuration values and API keys are loaded from environment variables rather than hard-coded in source code.
 
-Configuration values and API keys are loaded through environment variables instead of being hard-coded in application source code.
-
-### Production Considerations
-
-The current security model is intentionally lightweight for a portfolio/reference implementation.
-
-A production enterprise deployment would normally use technologies such as:
-
-- AWS IAM
-- Amazon Cognito
-- OAuth 2.0
-- OpenID Connect
-- JWT authentication
-- Enterprise identity providers
-- Secret rotation
-- Fine-grained authorization policies
-- Audit logging
-
-The current reader/admin implementation demonstrates role-separated authorization but is not intended to represent a complete enterprise identity-management platform.
+This is a lightweight portfolio security model, not a complete enterprise identity platform. A production deployment would typically use IAM, Cognito, OAuth 2.0, OpenID Connect, JWT-based authentication, secret rotation, audit logging, and fine-grained authorization.
 
 ---
 
 ## Environment Configuration
 
-Create a local environment file from the example:
+Create a local environment file:
 
 bash
 cp .env.example .env
@@ -431,38 +377,26 @@ READER_API_KEY=replace-with-reader-api-key
 ADMIN_API_KEY=replace-with-admin-api-key
 
 
-Never commit real API keys, AWS credentials, tokens, or production secrets to the repository.
+Never commit real API keys, AWS credentials, tokens, or production secrets.
 
-AWS authentication should use the standard AWS credential chain, such as:
-
-- AWS CLI credentials
-- IAM roles
-- Workload identity
-- Other approved AWS authentication mechanisms
+AWS authentication should use the standard AWS credential chain, such as an authenticated AWS CLI profile, IAM role, or workload identity.
 
 ---
 
 ## Running Locally
 
-### 1. Clone the Repository
+Clone the repository:
 
 bash
 git clone https://github.com/raviteja-reddy-g/secure-enterprise-knowledge-assistant.git
-
-
-Move into the project directory:
-
-bash
 cd secure-enterprise-knowledge-assistant
 
 
-### 2. Create a Virtual Environment
+Create and activate a virtual environment:
 
 bash
 python -m venv .venv
 
-
-Activate it.
 
 macOS/Linux:
 
@@ -476,27 +410,25 @@ bash
 .venv\Scripts\activate
 
 
-### 3. Install Dependencies
+Install dependencies:
 
 bash
 pip install -r requirements.txt
 
 
-### 4. Configure Environment Variables
+Create the local environment file:
 
 bash
 cp .env.example .env
 
 
-Update .env with your local configuration.
-
-### 5. Start the API
+Start the API:
 
 bash
 uvicorn app.main:app --reload
 
 
-The API will normally be available at:
+API URL:
 
 text
 http://localhost:8000
@@ -512,7 +444,7 @@ http://localhost:8000/docs
 
 ## Running with Docker
 
-Build the Docker image:
+Build the image:
 
 bash
 docker build -t secure-enterprise-knowledge-assistant .
@@ -524,13 +456,7 @@ bash
 docker run --env-file .env -p 8000:8000 secure-enterprise-knowledge-assistant
 
 
-The application will be exposed on:
-
-text
-http://localhost:8000
-
-
-The .dockerignore file prevents unnecessary local development files, caches, environment files, tests, and repository metadata from being copied into the Docker build context.
+The .dockerignore file keeps local environment files, caches, tests, repository metadata, and other unnecessary development files out of the Docker build context.
 
 ---
 
@@ -548,21 +474,19 @@ python -m unittest discover -s tests -p "test_*.py" -v
 
 tests/test_security.py validates:
 
-- Matching API keys
-- Non-matching API keys
+- Matching and non-matching API keys
 - Missing expected credentials
 - Reader authorization
 - Administrator authorization
 - Administrator access to reader operations
-- Unauthorized reader requests
-- Unauthorized administrator requests
+- Rejection of unauthorized requests
 
 ### Document Processing Tests
 
 tests/test_document_processor.py validates:
 
-- Removal of extra whitespace
-- Removal of leading and trailing spaces
+- Whitespace cleanup
+- Leading and trailing whitespace removal
 - Document splitting into multiple chunks
 - Preservation of important content during chunking
 
@@ -570,16 +494,7 @@ tests/test_document_processor.py validates:
 
 ## Continuous Integration
 
-The project uses GitHub Actions for automated continuous integration.
-
-The workflow runs for:
-
-text
-Pushes to main
-Pull requests targeting main
-
-
-The CI pipeline performs:
+GitHub Actions runs on pushes to main and pull requests targeting main.
 
 text
 Checkout Repository
@@ -595,11 +510,11 @@ Compile / Syntax Validation
 Run Unit Tests
 
 
-This helps detect syntax errors, dependency problems, and test failures before changes are integrated.
+The CI workflow catches syntax errors, dependency-installation issues, and unit-test failures.
 
 ---
 
-## Docker Architecture
+## Docker Runtime
 
 The application uses:
 
@@ -607,16 +522,7 @@ dockerfile
 FROM python:3.11-slim
 
 
-The Docker image:
-
-1. Uses Python 3.11.
-2. Creates /app as the working directory.
-3. Installs dependencies from requirements.txt.
-4. Copies the application into the image.
-5. Exposes port 8000.
-6. Starts FastAPI using Uvicorn.
-
-Application startup command:
+Startup command:
 
 bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000
@@ -624,82 +530,31 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 ---
 
-## Design Decisions
+## Key Design Decisions
 
 ### Why RAG Instead of Fine-Tuning?
 
-RAG allows enterprise knowledge to remain outside the language model while still providing relevant information at query time.
-
-This makes it easier to update enterprise knowledge without retraining the underlying model.
-
----
+RAG keeps enterprise knowledge outside the underlying model and injects relevant context at query time. This makes the knowledge base easier to update without retraining the model.
 
 ### Why FAISS?
 
-FAISS provides efficient vector similarity search and works well for demonstrating semantic retrieval in a local portfolio environment.
-
-For larger production deployments, the vector layer could be replaced with a scalable managed or distributed vector-search system.
-
----
+FAISS provides efficient local vector similarity search and works well for a portfolio/reference implementation. A larger production deployment could replace it with a managed or distributed vector-search platform.
 
 ### Why Amazon Bedrock?
 
-Amazon Bedrock provides managed access to foundation models and integrates naturally with AWS-based enterprise architectures.
-
-The application keeps the model configurable through an environment variable rather than permanently tying the implementation to one specific model.
-
----
+Amazon Bedrock provides managed access to foundation models and fits naturally into AWS-based enterprise architectures.
 
 ### Why Amazon S3?
 
-Amazon S3 provides durable object storage and is commonly used for enterprise documents, data pipelines, and application assets.
-
-It also integrates directly with the AWS SDK for Python through boto3.
-
----
+Amazon S3 provides durable object storage and integrates directly with Python through boto3.
 
 ### Why FastAPI?
 
-FastAPI provides:
-
-- Request validation
-- Response models
-- Dependency injection
-- Automatic OpenAPI documentation
-- Interactive API documentation
-- A lightweight Python API framework suitable for AI services
-
----
+FastAPI provides request validation, response models, dependency injection, automatic OpenAPI documentation, and interactive API documentation.
 
 ### Why Docker?
 
-Docker creates a consistent runtime environment that can be reproduced across development, testing, and deployment environments.
-
----
-
-### Why GitHub Actions?
-
-GitHub Actions automatically validates repository changes by installing dependencies, compiling the Python source, and running automated unit tests.
-
----
-
-## Error Handling
-
-The API returns controlled error responses rather than exposing internal exception details.
-
-For example, failures in question processing return a generic server response:
-
-text
-Unable to process the question.
-
-
-Similarly, ingestion failures return:
-
-text
-Unable to ingest documents.
-
-
-This avoids directly exposing internal application errors to API consumers.
+Docker provides a consistent runtime environment across development and deployment environments.
 
 ---
 
@@ -720,17 +575,16 @@ Current limitations include:
 - No multi-tenant authorization model
 - No retrieval-quality evaluation framework
 - No rate limiting
-- No full prompt-injection defense layer
+- No complete prompt-injection defense layer
+- S3 listing does not yet paginate large object collections
 
-FAISS indexes loaded by this application are expected to be trusted artifacts generated by the application itself.
-
-The current implementation uses:
+The local FAISS index is expected to be a trusted artifact generated by this application. The current implementation uses:
 
 python
 allow_dangerous_deserialization=True
 
 
-when loading the local FAISS index. Untrusted serialized vector-store files should never be loaded. A production implementation should enforce a stronger trusted-artifact and storage strategy.
+Untrusted serialized vector-store files must never be loaded.
 
 ---
 
@@ -738,11 +592,9 @@ when loading the local FAISS index. Untrusted serialized vector-store files shou
 
 Potential enhancements include:
 
-- PDF document ingestion
-- DOCX document ingestion
-- S3 pagination for large document collections
-- Source metadata preservation
-- Document citations in generated answers
+- PDF and DOCX ingestion
+- S3 pagination
+- Source metadata and answer citations
 - Fine-grained document authorization
 - IAM/Cognito/OIDC authentication
 - Managed vector search
@@ -752,11 +604,11 @@ Potential enhancements include:
 - Audit logging
 - Structured application logging
 - Cloud monitoring and alerting
-- API endpoint integration tests
+- API integration tests
 - Bedrock mock testing
 - S3 integration testing
 - Infrastructure as Code
-- Automated deployment pipeline
+- Automated deployment
 - Production secrets management
 - Horizontal scaling
 - Multi-tenant access control
@@ -765,9 +617,7 @@ Potential enhancements include:
 
 ## Portfolio Scope
 
-This repository demonstrates the architecture and engineering concepts behind a secure enterprise RAG application.
-
-It is designed to showcase experience with:
+This repository demonstrates engineering concepts across:
 
 text
 Generative AI
@@ -785,10 +635,10 @@ API Security
 Docker
 Automated Testing
 GitHub Actions
-CI
+Continuous Integration
 
 
-It should not be interpreted as production employer source code or as containing any confidential enterprise implementation.
+It should not be interpreted as production employer source code or as containing confidential enterprise implementation details.
 
 ---
 
