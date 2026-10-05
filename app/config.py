@@ -1,11 +1,23 @@
 import os
+
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
-AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
-S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
-BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID")
+
+AWS_REGION = os.getenv(
+    "AWS_REGION",
+    "us-east-1"
+)
+
+S3_BUCKET_NAME = os.getenv(
+    "S3_BUCKET_NAME"
+)
+
+BEDROCK_MODEL_ID = os.getenv(
+    "BEDROCK_MODEL_ID"
+)
 
 VECTOR_STORE_PATH = os.getenv(
     "VECTOR_STORE_PATH",
@@ -13,5 +25,16 @@ VECTOR_STORE_PATH = os.getenv(
 )
 
 TOP_K_RESULTS = int(
-    os.getenv("TOP_K_RESULTS", "5")
+    os.getenv(
+        "TOP_K_RESULTS",
+        "5"
+    )
+)
+
+READER_API_KEY = os.getenv(
+    "READER_API_KEY"
+)
+
+ADMIN_API_KEY = os.getenv(
+    "ADMIN_API_KEY"
 )
